@@ -28,11 +28,36 @@ app.use(function (req, res, next) {
   next();
 });
 
-//---
+//---- keep alive the VCR server ----
+
+if (process.env.VCR_PORT) {   // is this application running on VCR?
+
+  const vcrServer = process.env.NERU_SERVER_URL;
+
+  ( async() => {
+
+    setInterval( async() => {
+
+      try {
+        await axios.get(vcrServer + '/_/health', {});
+        // console.log("> keep-alive sent");
+      } 
+      catch (err) {
+        console.log("> keep-alive error", err);
+      }
+
+    }, 60000);
+
+  })();
+
+}; 
+
+//-------------------------------------------------------------------------
 
 // ONLY if needed - For self-signed certificate in chain - In test environment
 // Must leave next line as a comment in production environment
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+
 
 //---- DeepGram ASR engine ----
 
@@ -107,8 +132,8 @@ app.ws('/socket', async (ws, req) => {
 
   const wsDGUri = dgWsListenEndpoint + '?callback=' + webhookUrl + 
   '&diarize=' + dgSessionDiarize + '&encoding=linear16&sample_rate=16000' + 
-  '&language=' + dgSessionLanguageCode + '&model=nova-2' + '&punctuate=true' + 
-  '&extra=peer_uuid:' + peerUuid + '&extra=language_code:' + dgSessionLanguageCode; 
+  '&language=' + dgSessionLanguageCode + '&model=nova-2-phonecall' + '&punctuate=true' + '&endpointing=10' + 
+  '&extra=peer_uuid:' + peerUuid + '&extra=language_code:' + dgSessionLanguageCode;
  
   console.log('Deepgram WebSocket URI:', wsDGUri);
 
